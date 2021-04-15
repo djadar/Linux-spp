@@ -68,10 +68,12 @@ void register_pfn(uint64_t pfn)
 	return;
 }
 
-
+//Augusta
 void unregister_pfn(void)
 {
 
+	xen_hvm_subpage_t **list_spp; int i=0;
+	
 	xen_hvm_subpage_t spp;
 	spp.domid = DOMID_SELF;
 	spp.subpage = 100;
@@ -84,8 +86,11 @@ void unregister_pfn(void)
 		ptr = ptr->next;
 		kfree(it);
 		it = ptr;
-		HYPERVISOR_hvm_op(HVMOP_set_subpage, &spp);
+		//on recupère le spp qui nous interesse
+		list_spp[i] = &spp;
+		i++;
 	}
+	HYPERVISOR_hvm_op(HVMOP_release_subpage, &list_spp);
 	get_current()->spp_head = NULL;
 }
 

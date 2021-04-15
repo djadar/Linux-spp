@@ -71,4 +71,7 @@ struct xen_hvm_subpage {
 typedef struct xen_hvm_subpage xen_hvm_subpage_t;
 DEFINE_GUEST_HANDLE_STRUCT(xen_hvm_subpage_t);
 
+//Augusta
+#define HVMOP_release_subpage 27
+//
 #endif /* __XEN_PUBLIC_HVM_HVM_OP_H__ */
