@@ -68,29 +68,44 @@ void register_pfn(uint64_t pfn)
 	return;
 }
 
-//Augusta
+void ajouter_list(xen_hvm_subpage_t* spp, xen_hvm_subpage_t courant){
+	
+	if (spp == NULL){
+		spp = &courant;
+		return ;
+	}
+	xen_hvm_subpage_t* tmp = spp;
+	while (tmp->next != NULL){
+		tmp = tmp->next;
+	}
+	tmp->next = (uint64_t) kmalloc(sizeof(xen_hvm_subpage_t), GFP_KERNEL);
+
+	tmp->next = (uint64_t)&courant;
+	//courant.next = NULL;
+	kfree(tmp);
+}
+
 void unregister_pfn(void)
 {
 
-	xen_hvm_subpage_t **list_spp; int i=0;
-	
-	xen_hvm_subpage_t spp;
+	xen_hvm_subpage_t spp, *tmp;
 	spp.domid = DOMID_SELF;
 	spp.subpage = 100;
 
 	struct spp_pfn *ptr = get_current()->spp_head;
 	struct spp_pfn *it = ptr;
+	tmp = (xen_hvm_subpage_t *) kmalloc(sizeof(xen_hvm_subpage_t), GFP_KERNEL);
+
 	while(ptr) {
 		printk("unregister: %lx\n", ptr->pfn);
 		spp.gfn = ptr->pfn;
 		ptr = ptr->next;
 		kfree(it);
 		it = ptr;
-		//on recupère le spp qui nous interesse
-		list_spp[i] = &spp;
-		i++;
+
+		ajouter_list(tmp, spp);
 	}
-	HYPERVISOR_hvm_op(HVMOP_release_subpage, &list_spp);
+	HYPERVISOR_hvm_op(HVMOP_set_subpage, tmp);
 	get_current()->spp_head = NULL;
 }
 
@@ -523,13 +538,12 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 		printk("Hypercall: unset subpage %lx %llx %u\n", start, spp.gfn, spp.subpage);
 
 		HYPERVISOR_hvm_op(HVMOP_set_subpage, &spp);
-		return ret;
 	}
 
 	/* release page */
 	if (prot == 64){
 		unregister_pfn();
-		return 0;
+		return;
 	}
 	unsigned long vm_flags, nstart, end, tmp, reqprot;
 	struct vm_area_struct *vma, *prev;
