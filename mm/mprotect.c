@@ -117,11 +117,11 @@ void unregister_pfn(void)
 	
 	if(tmp!=NULL){
 		xen_hvm_subpage_t *pel = tmp;
-		while (pel != NULL){
-		pel = pel->next;
-		kfree(tmp);
-		tmp=pel;
-		
+		while (tmp != NULL){
+			kfree(tmp);
+			pel = pel->next;
+			tmp=pel;
+		}
 	}
 
 	get_current()->spp_head = NULL;
