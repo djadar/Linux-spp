@@ -68,13 +68,13 @@ void register_pfn(uint64_t pfn)
 	return;
 }
 
-void ajouter_list(xen_hvm_subpage_t* spp, xen_hvm_subpage_t courant){
+void ajouter_list(xen_hvm_subpage_t* spp, uint64_t courant){
 	
 	xen_hvm_subpage_t *pel = (xen_hvm_subpage_t *) kmalloc(sizeof(xen_hvm_subpage_t), GFP_KERNEL);
 	//on remplit une nouvelle structure
-	pel->domid = courant.domid;
-	pel->subpage = courant.subpage;
-	pel->gfn = courant.gfn;
+	pel->domid = DOMID_SELF;
+	pel->subpage = 100;
+	pel->gfn = courant;
 	pel->next = NULL;
 
 	if (spp == NULL){
@@ -82,14 +82,13 @@ void ajouter_list(xen_hvm_subpage_t* spp, xen_hvm_subpage_t courant){
 		spp = pel;
 		return ;
 	}
-	xen_hvm_subpage_t *tmp = (xen_hvm_subpage_t *) kmalloc(sizeof(xen_hvm_subpage_t), GFP_KERNEL);
-	tmp = spp;
+	xen_hvm_subpage_t *tmp = spp;
 	while (tmp->next != NULL){
 		tmp = tmp->next;
 	}
 	//on ajoute la structure
-	tmp->next = (uint64_t)pel;
-	kfree(pel);
+	tmp->next = pel;
+	//kfree(pel);
 	kfree(tmp);
 }
 
@@ -103,8 +102,7 @@ void unregister_pfn(void)
 
 	struct spp_pfn *ptr = get_current()->spp_head;
 	struct spp_pfn *it = ptr;
-	tmp = (xen_hvm_subpage_t *) kmalloc(sizeof(xen_hvm_subpage_t), GFP_KERNEL);
-
+	
 	while(ptr) {
 		printk("unregister: %lx\n", ptr->pfn);
 		spp.gfn = ptr->pfn;
@@ -112,9 +110,20 @@ void unregister_pfn(void)
 		kfree(it);
 		it = ptr;
 
-		ajouter_list(tmp, spp);
+		ajouter_list(tmp, spp.gfn);
 	}
 	HYPERVISOR_hvm_op(HVMOP_set_subpage, tmp);
+
+	
+	if(tmp!=NULL){
+		xen_hvm_subpage_t *pel = tmp;
+		while (pel != NULL){
+		pel = pel->next;
+		kfree(tmp);
+		tmp=pel;
+		
+	}
+
 	get_current()->spp_head = NULL;
 }
 

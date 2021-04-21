@@ -67,7 +67,7 @@ struct xen_hvm_subpage {
 	domid_t domid;
 	uint32_t subpage;
 	uint64_t gfn;
-    uint64_t next;
+    struct xen_hvm_subpage *next;
 };
 typedef struct xen_hvm_subpage xen_hvm_subpage_t;
 DEFINE_GUEST_HANDLE_STRUCT(xen_hvm_subpage_t);
