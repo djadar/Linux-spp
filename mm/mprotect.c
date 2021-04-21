@@ -70,21 +70,30 @@ void register_pfn(uint64_t pfn)
 
 void ajouter_list(xen_hvm_subpage_t* spp, xen_hvm_subpage_t courant){
 	
+	xen_hvm_subpage_t *pel = (xen_hvm_subpage_t *) kmalloc(sizeof(xen_hvm_subpage_t), GFP_KERNEL);
+	//on remplit une nouvelle structure
+	pel->domid = courant.domid;
+	pel->subpage = courant.subpage;
+	pel->gfn = courant.gfn;
+	pel->next = NULL;
+
 	if (spp == NULL){
-		spp = &courant;
+		//on ajoute la structure
+		spp = pel;
 		return ;
 	}
-	xen_hvm_subpage_t* tmp = spp;
+	xen_hvm_subpage_t *tmp = (xen_hvm_subpage_t *) kmalloc(sizeof(xen_hvm_subpage_t), GFP_KERNEL);
+	tmp = spp;
 	while (tmp->next != NULL){
 		tmp = tmp->next;
 	}
-	tmp->next = (uint64_t) kmalloc(sizeof(xen_hvm_subpage_t), GFP_KERNEL);
-
-	tmp->next = (uint64_t)&courant;
-	//courant.next = NULL;
+	//on ajoute la structure
+	tmp->next = (uint64_t)pel;
+	kfree(pel);
 	kfree(tmp);
 }
 
+//Modifications Augusta
 void unregister_pfn(void)
 {
 
